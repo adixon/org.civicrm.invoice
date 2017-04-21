@@ -92,7 +92,7 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
 
     // check that all the contribution ids have status Completed, Pending, Refunded.
     $this->_contributionStatusId = CRM_Contribute_PseudoConstant::contributionStatus(NULL, 'name');
-    $status = array('Completed', 'Pending', 'Refunded');
+    $status = array('Completed', 'Pending', 'Refunded', 'Partially paid');
     $statusId = array();
     foreach ($this->_contributionStatusId as $key => $value) {
       if (in_array($value, $status)) {
@@ -103,7 +103,7 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
     $query = "SELECT count(*) FROM civicrm_contribution WHERE contribution_status_id NOT IN ($Id) AND {$this->_componentClause}";
     $count = CRM_Core_DAO::singleValueQuery($query);
     if ($count != 0) {
-      CRM_Core_Error::statusBounce(ts('Please select only contributions with Completed, Pending, Refunded status.'));
+      CRM_Core_Error::statusBounce(ts('Please select only contributions with Completed, Pending, Refunded or Partially paid status.'));
     }
 
     // we have all the contribution ids, so now we get the contact ids
