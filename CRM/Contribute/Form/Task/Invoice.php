@@ -533,10 +533,8 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
         $sendTemplateParams['bcc'] = CRM_Utils_Array::value('bcc_receipt', $values);
 
         list($sent, $subject, $message, $html) = CRM_Core_BAO_MessageTemplate::sendTemplate($sendTemplateParams);
-        // functions call for adding activity with attachment
-        $pdfFileName = "{$invoiceId}.pdf";
-        $fileName = self::putFile($html, $pdfFileName);
-        self::addActivities($subject, $contribution->contact_id, $fileName, $params);
+        // log as activity
+        self::logInvoiceActivity($invoiceId, $html, $subject, $contribution->contact_id, $params);
       }
       elseif ($contribution->_component == 'event') {
         $email = CRM_Contact_BAO_Contact::getPrimaryEmail($contribution->contact_id);
@@ -548,10 +546,8 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
         $sendTemplateParams['bcc'] = CRM_Utils_Array::value('bcc_confirm', $values);
 
         list($sent, $subject, $message, $html) = CRM_Core_BAO_MessageTemplate::sendTemplate($sendTemplateParams);
-        // functions call for adding activity with attachment
-        $pdfFileName = "{$invoiceId}.pdf";
-        $fileName = self::putFile($html, $pdfFileName);
-        self::addActivities($subject, $contribution->contact_id, $fileName, $params);
+        // log as activity
+        self::logInvoiceActivity($invoiceId, $html, $subject, $contribution->contact_id, $params);
       }
 
       // CRM-20387 save my human-readable invoice number as invoice_id in the contribution table,
@@ -574,10 +570,8 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
           'margin_left' => 65,
           'metric' => 'px',
         ));
-        // functions call for adding activity with attachment
-        $fileName = self::putFile($html, $pdfFileName);
-        self::addActivities($subject, $contactIds, $fileName, $params);
-
+        // log as activity
+        self::logInvoiceActivity($invoiceId, $html, $subject, $contactIds, $params);
         CRM_Utils_System::civiExit();
       }
     }
@@ -597,19 +591,27 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
   }
 
   /**
-   * Add activity for Email Invoice and the PDF Invoice.
+   * Log activity for Email Invoice and the PDF Invoice.
    *
+   * @param string $invoiceId
+   *   Human-readable invoice number.
+   * @param string $html
+   *   Content for pdf in html format.
    * @param string $subject
    *   Activity subject.
    * @param array $contactIds
-   *   Contact Id.
+   *   Contact Id or ids.
    * @param string $fileName
    *   Gives the location with name of the file.
    * @param array $params
    *   For invoices.
    *
    */
-  static public function addActivities($subject, $contactIds, $fileName, $params) {
+  static function logInvoiceActivity($invoiceId, $html, $subject, $contactIds, $params) {
+    // ensure a unique name in case of multiple versions of this invoice
+    $dt = date('ymd-His');
+    $pdfFileName = $invoiceId .'-'. $dt . '.pdf';
+    $fileName = self::putFile($html, $pdfFileName);
     $session = CRM_Core_Session::singleton();
     $userID = $session->get('userID');
     $config = CRM_Core_Config::singleton();
@@ -655,7 +657,7 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
    * @return string
    *   Name of file which is in pdf format
    */
-  static public function putFile($html, $name = 'Invoice.pdf') {
+  static function putFile($html, $name) {
     $options = new Options();
     $options->set('isRemoteEnabled', TRUE);
 
