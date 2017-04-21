@@ -631,7 +631,7 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
     }
 
     $activityParams = array(
-      'subject' => $subject,
+      'subject' => "$invoiceID $subject",
       'source_contact_id' => $userID,
       'target_contact_id' => $contactIds,
       'activity_type_id' => $activityTypeID,
